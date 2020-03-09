@@ -1,0 +1,22 @@
+sudo: required
+language: generic
+services:
+    - docker
+
+before_install:
+    - docker image build -t vidalgp/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true vidalgp/react-test npm test
+
+after_success:
+    - docker image build -t vidalgp/multi-client ./client
+    - docker image build -t vidalgp/multi-nginx ./nginx
+    - docker image build -t vidalgp/multi-server ./server
+    - docker image build -t vidalgp/multi-worker ./worker
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    - docker push vidalgp/multi-worker
+    - docker push vidalgp/multi-server
+    - docker push vidalgp/multi-nginx
+    - docker push vidalgp/multi-client
+
